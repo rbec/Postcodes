@@ -5,6 +5,8 @@ VisualStudioVersion = 15.0.27428.2043
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Rbec.Postcodes", "Rbec.Postcodes\Rbec.Postcodes.csproj", "{57E5659C-13BC-4A83-BFAD-F3F05B69BCA0}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Rbec.Postcodes.Tests", "Rbec.Postcodes.Tests\Rbec.Postcodes.Tests.csproj", "{7CB68507-4D4D-4543-8E12-6BC455227572}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -15,6 +17,10 @@ Global
 		{57E5659C-13BC-4A83-BFAD-F3F05B69BCA0}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{57E5659C-13BC-4A83-BFAD-F3F05B69BCA0}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{57E5659C-13BC-4A83-BFAD-F3F05B69BCA0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7CB68507-4D4D-4543-8E12-6BC455227572}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7CB68507-4D4D-4543-8E12-6BC455227572}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7CB68507-4D4D-4543-8E12-6BC455227572}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7CB68507-4D4D-4543-8E12-6BC455227572}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
