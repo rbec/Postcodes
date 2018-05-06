@@ -11,17 +11,36 @@ namespace Rbec.Postcodes
             _data = data;
         }
 
+        public static char ToUpperFast(char c)
+        {
+            if (c >= 'a') return (char)(c - 32);
+            return c;
+        }
+
+        public static bool IsLetterFast(char c)
+        {
+            return c >= 'A';
+        }
+
+
+        public static bool IsNumberFast(char c)
+        {
+            return c < 'A';
+        }
+
         public static char[] Normalise(string s)
         {
             var chars = new char[7];
             var i = 0;
-            chars[0] = char.ToUpper(s[i++]);
-            chars[1] = char.IsNumber(s[i]) ? ' ' : char.ToUpper(s[i++]);
+            chars[0] = ToUpperFast(s[i++]);
+            chars[1] = IsNumberFast(s[i]) ? ' ' : ToUpperFast(s[i++]);
             chars[2] = s[i++];
-            chars[3] = char.IsLetter(s[i + 1]) ? ' ' : char.ToUpper(s[i++]);
+            chars[3] = IsLetterFast(s[i + 1]) ? ' ' : ToUpperFast(s[i++]);
+            while (s[i] == ' ')
+                i++;
             chars[4] = s[i++];
-            chars[5] = char.ToUpper(s[i++]);
-            chars[6] = char.ToUpper(s[i]);
+            chars[5] = ToUpperFast(s[i++]);
+            chars[6] = ToUpperFast(s[i]);
             return chars;
         }
 
@@ -40,7 +59,7 @@ namespace Rbec.Postcodes
         {
             if (c == ' ')
                 return 0;
-            if (char.IsNumber(c))
+            if (IsNumberFast(c))
                 return EncodeNumber(c) + 1;
             return EncodeLetter(c) + 11;
         }
@@ -86,7 +105,7 @@ namespace Rbec.Postcodes
 
         public static Postcode Parse(string s)
         {
-            var chars = Normalise(s.Replace(" ", string.Empty));
+            var chars = Normalise(s);
             var data = EncodeLetter(chars[0]);
             data = data * 27 + EncodeLetterOrSpace(chars[1]);
             data = data * 10 + EncodeNumber(chars[2]);

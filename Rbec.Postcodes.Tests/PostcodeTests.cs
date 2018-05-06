@@ -11,7 +11,7 @@ namespace Rbec.Postcodes.Tests
             foreach (var line in File.ReadLines(@"C:\temp\postcodes.txt"))
             {
                 var postcode = Postcode.Parse(line);
-                Assert.Equal(line, $"{postcode}");
+                Assert.Equal(line, postcode.ToString());
             }
         }
 
