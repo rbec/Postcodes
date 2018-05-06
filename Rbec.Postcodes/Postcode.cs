@@ -13,44 +13,135 @@ namespace Rbec.Postcodes
 
         public static char ToUpper(char c) => c >= 'a' ? (char) (c - 32) : c;
         public static bool IsLetter(char c) => c >= 'A';
-        public static bool IsNumberFast(char c) => c < 'A';
+        public static bool IsNumber(char c) => c < 'A';
         private static int EncodeLetter(char c) => c - 'A';
         private static int EncodeNumber(char c) => c - '0';
 
-        private static int EncodeNumberOrLetter(char c)
+        private static int FirstLetterOrNumberIndex(string s, int start)
         {
-            if (IsNumberFast(c))
-                return EncodeNumber(c);
-            return EncodeLetter(c) + 10;
+            while (s[start] == ' ')
+            {
+                start++;
+            }
+            return start;
         }
 
-        private static char Next(string s, ref int next)
+        private static char ConsumeCurrent(string s, ref int currentIndex)
         {
-            var c = s[next];
-            while (s[++next] == ' ') { }
-            return c;
+            var current = s[currentIndex];
+            while (s[++currentIndex] == ' ') { }
+            return current;
+        }
+
+        private static bool TryEncodeLetter(char c, ref int data)
+        {
+            c = ToUpper(c);
+            if (c < 'A' || c > 'Z')
+                return false;
+            data += EncodeLetter(c);
+            return true;
+        }
+
+        private static bool TryEncodeNumber(char c, ref int data)
+        {
+            if (c < '0' || c > '9')
+                return false;
+            data += EncodeNumber(c);
+            return true;
+        }
+
+        private static bool TryEncodeLetterOrMissing(char c, ref int data)
+        {
+            data++;
+            return TryEncodeLetter(c, ref data);
+        }
+
+        private static bool TryEncodeLetterOrNumber(char c, ref int data)
+        {
+            data++;
+            if (IsNumber(c))
+                return TryEncodeNumber(c, ref data);
+            data += 10;
+            return TryEncodeLetter(c, ref data);
+        }
+
+        public static bool TryParse(string s, out Postcode postcode)
+        {
+            var currentIndex = FirstLetterOrNumberIndex(s, 0);
+            var data = 0;
+            if (TryEncodeLetter(ConsumeCurrent(s, ref currentIndex), ref data))
+            {
+                data *= 27;
+                if (IsLetter(s[currentIndex]))
+                {
+                    if (!TryEncodeLetter(ConsumeCurrent(s, ref currentIndex), ref data))
+                        return false;
+                }
+
+                data *= 10;
+                if (TryEncodeNumber(ConsumeCurrent(s, ref currentIndex), ref data))
+                {
+                    data *= 37;
+                    if (IsNumber(s[FirstLetterOrNumberIndex(s, currentIndex + 1)]))
+                    {
+                        if (!TryEncodeLetterOrNumber(ConsumeCurrent(s, ref currentIndex), ref data))
+                            return false;
+                    }
+
+                    data *= 10;
+                    if (TryEncodeNumber(ConsumeCurrent(s, ref currentIndex), ref data))
+                    {
+                        data *= 26;
+                        if (TryEncodeLetter(ConsumeCurrent(s, ref currentIndex), ref data))
+                        {
+
+                            data *= 26;
+                            if (TryEncodeLetter(s[currentIndex], ref data))
+                            {
+                                postcode = new Postcode(data);
+                                return true;
+                            }
+                        }
+                    }
+                }
+            }
+            postcode = default;
+
+            return false;
+
         }
 
         public static Postcode Parse(string s)
         {
-            var i = 0;
-            var data = EncodeLetter(ToUpper(Next(s, ref i)));
-            data *= 27;
-            if (!IsNumberFast(s[i]))
-                data += EncodeLetter(ToUpper(Next(s, ref i))) + 1;
-            data = data * 10 + EncodeNumber(Next(s, ref i));
+            var currentIndex = FirstLetterOrNumberIndex(s, 0);
+            var data = 0;
+            TryEncodeLetter(ConsumeCurrent(s, ref currentIndex), ref data);
 
-            var j = i;
-            Next(s, ref j);
-            data *= 37;
-            if (!IsLetter(s[j]))
+            data *= 27;
+            if (IsLetter(s[currentIndex]))
             {
-                data += EncodeNumberOrLetter(ToUpper(Next(s, ref i))) + 1;
+                TryEncodeLetter(ConsumeCurrent(s, ref currentIndex), ref data);
+                data++;
             }
 
-            data = data * 10 + EncodeNumber(Next(s, ref i));
-            data = data * 26 + EncodeLetter(ToUpper(Next(s, ref i)));
-            return new Postcode(data * 26 + EncodeLetter(ToUpper(s[i])));
+            data *= 10;
+            TryEncodeNumber(ConsumeCurrent(s, ref currentIndex), ref data);
+
+            data *= 37;
+            if (IsNumber(s[FirstLetterOrNumberIndex(s, currentIndex + 1)]))
+            {
+                TryEncodeLetterOrNumber(ConsumeCurrent(s, ref currentIndex), ref data);
+            }
+
+            data *= 10;
+            TryEncodeNumber(ConsumeCurrent(s, ref currentIndex), ref data);
+           
+            data *= 26;
+            TryEncodeLetter(ConsumeCurrent(s, ref currentIndex), ref data);
+
+            data *= 26;
+            TryEncodeLetter(s[currentIndex], ref data);
+            return new Postcode(data);
         }
 
         private static int DivRem(int a, int b, out int remainder)
