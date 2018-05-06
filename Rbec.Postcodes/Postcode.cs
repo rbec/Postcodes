@@ -4,36 +4,20 @@ namespace Rbec.Postcodes
 {
     public struct Postcode : IComparable<Postcode>, IEquatable<Postcode>
     {
-        private readonly uint _data;
+        private readonly int _data;
 
-        private Postcode(uint data)
+        private Postcode(int data)
         {
             _data = data;
         }
 
-        public static char ToUpperFast(char c)
-        {
-            if (c >= 'a') return (char)(c - 32);
-            return c;
-        }
+        public static char ToUpper(char c) => c >= 'a' ? (char) (c - 32) : c;
+        public static bool IsLetter(char c) => c >= 'A';
+        public static bool IsNumberFast(char c) => c < 'A';
+        private static int EncodeLetter(char c) => c - 'A';
+        private static int EncodeNumber(char c) => c - '0';
 
-        public static bool IsLetterFast(char c)
-        {
-            return c >= 'A';
-        }
-
-        public static bool IsNumberFast(char c)
-        {
-            return c < 'A';
-        }
-
-        private static uint EncodeLetter(char c) =>
-            (uint)c - 'A';
-
-        private static uint EncodeNumber(char c) =>
-            (uint)c - '0';
-
-        private static uint EncodeNumberOrLetter(char c)
+        private static int EncodeNumberOrLetter(char c)
         {
             if (IsNumberFast(c))
                 return EncodeNumber(c);
@@ -50,40 +34,39 @@ namespace Rbec.Postcodes
         public static Postcode Parse(string s)
         {
             var i = 0;
-            var data = EncodeLetter(ToUpperFast(Next(s, ref i)));
+            var data = EncodeLetter(ToUpper(Next(s, ref i)));
             data *= 27;
             if (!IsNumberFast(s[i]))
-                data += EncodeLetter(ToUpperFast(Next(s, ref i))) + 1;
+                data += EncodeLetter(ToUpper(Next(s, ref i))) + 1;
             data = data * 10 + EncodeNumber(Next(s, ref i));
 
             var j = i;
             Next(s, ref j);
             data *= 37;
-            if (!IsLetterFast(s[j]))
+            if (!IsLetter(s[j]))
             {
-                data += EncodeNumberOrLetter(ToUpperFast(Next(s, ref i))) + 1;
+                data += EncodeNumberOrLetter(ToUpper(Next(s, ref i))) + 1;
             }
 
             data = data * 10 + EncodeNumber(Next(s, ref i));
-            data = data * 26 + EncodeLetter(ToUpperFast(Next(s, ref i)));
-            return new Postcode(data * 26 + EncodeLetter(ToUpperFast(s[i])));
+            data = data * 26 + EncodeLetter(ToUpper(Next(s, ref i)));
+            return new Postcode(data * 26 + EncodeLetter(ToUpper(s[i])));
         }
 
-        private static uint DivRem(uint a, uint b, out uint remainder)
+        private static int DivRem(int a, int b, out int remainder)
         {
             var result = a / b;
-            remainder = a % b;
-            //remainder = a - result * b;
+            remainder = a - result * b;
             return result;
         }
 
-        private static char DecodeLetter(ref uint c)
+        private static char DecodeLetter(ref int c)
         {
             c = DivRem(c, 26, out var remainder);
             return (char)(remainder + 'A');
         }
 
-        private static char DecodeLetterOrSpace(ref uint c)
+        private static char DecodeLetterOrSpace(ref int c)
         {
             c = DivRem(c, 27, out var remainder);
 
@@ -92,7 +75,7 @@ namespace Rbec.Postcodes
             return (char)(remainder + 'A' - 1);
         }
 
-        private static char DecodeNumberOrLetterOrSpace(ref uint c)
+        private static char DecodeNumberOrLetterOrSpace(ref int c)
         {
             c = DivRem(c, 37, out var remainder);
 
@@ -103,7 +86,7 @@ namespace Rbec.Postcodes
             return (char)(remainder + 'A' - 11);
         }
 
-        private static char DecodeNumber(ref uint c)
+        private static char DecodeNumber(ref int c)
         {
             c = DivRem(c, 10, out var remainder);
             return (char)(remainder + '0');
@@ -129,25 +112,9 @@ namespace Rbec.Postcodes
             return new string(chars, i, 8 - i);
         }
 
-        public int CompareTo(Postcode other)
-        {
-            return _data.CompareTo(other._data);
-        }
-
-        public bool Equals(Postcode other)
-        {
-            return _data == other._data;
-        }
-
-        public override bool Equals(object obj)
-        {
-            if (obj is null) return false;
-            return obj is Postcode postcode && Equals(postcode);
-        }
-
-        public override int GetHashCode()
-        {
-            return (int)_data;
-        }
+        public int CompareTo(Postcode other) => _data.CompareTo(other._data);
+        public bool Equals(Postcode other) => _data == other._data;
+        public override bool Equals(object obj) => !(obj is null) && obj is Postcode postcode && Equals(postcode);
+        public override int GetHashCode() => _data;
     }
 }
