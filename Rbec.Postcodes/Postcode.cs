@@ -11,102 +11,24 @@ namespace Rbec.Postcodes
             _data = data;
         }
 
-        public static char ToUpper(char c) => c >= 'a' ? (char) (c - 32) : c;
         public static bool IsLetter(char c) => c >= 'A';
         public static bool IsNumber(char c) => c < 'A';
-        private static int EncodeLetter(char c) => c - 'A';
-        private static int EncodeNumber(char c) => c - '0';
 
-        private static int FirstLetterOrNumberIndex(string s, int start)
+        private static int EncodeLetter(char c, ref bool isInvalid)
         {
-            while (s[start] == ' ')
-            {
-                start++;
-            }
-            return start;
+            if (c >= 'a')
+                c = (char) (c - 32);
+            isInvalid |= c < 'A' || c > 'Z';
+            return c - 'A';
         }
 
-        private static char ConsumeCurrent(string s, ref int currentIndex)
+        private static int EncodeNumber(char c, ref bool isInvalid)
         {
-            if (currentIndex < s.Length)
-            {
-                var current = s[currentIndex];
-                do
-                {
-                    currentIndex++;
-                } while (currentIndex < s.Length && s[currentIndex] == ' ');
-              //  while (s[++currentIndex] == ' ') { }
-                return current;
-            }
-            return default(char);
+            isInvalid |= c < '0' || c > '9';
+            return c - '0';
         }
 
-        private static bool TryEncodeLetter(char c, ref int data)
-        {
-            c = ToUpper(c);
-            if (c < 'A' || c > 'Z')
-                return false;
-            data += EncodeLetter(c);
-            return true;
-        }
-
-        private static bool TryEncodeNumber(char c, ref int data)
-        {
-            if (c < '0' || c > '9')
-                return false;
-            data += EncodeNumber(c);
-            return true;
-        }
-
-        private static bool TryEncodeLetterOrNumber(char c, ref int data)
-        {
-            data++;
-            if (IsNumber(c))
-                return TryEncodeNumber(c, ref data);
-            data += 10;
-            return TryEncodeLetter(c, ref data);
-        }
-
-        //public static bool TryParse(string s, out Postcode postcode)
-        //{
-        //    postcode = default(Postcode);
-
-        //    if (string.IsNullOrEmpty(s)) return false;
-
-        //    var currentIndex = FirstLetterOrNumberIndex(s, 0);
-        //    var data = 0;
-        //    if (!TryEncodeLetter(ConsumeCurrent(s, ref currentIndex), ref data)) return false;
-
-        //    data *= 27;
-        //    if (currentIndex < s.Length && IsLetter(s[currentIndex]))
-        //    {
-        //        if (!TryEncodeLetter(ConsumeCurrent(s, ref currentIndex), ref data)) return false;
-        //        data++;
-        //    }
-
-        //    data *= 10;
-        //    if (!TryEncodeNumber(ConsumeCurrent(s, ref currentIndex), ref data)) return false;
-
-        //    data *= 37;
-        //    if (IsNumber(s[FirstLetterOrNumberIndex(s, currentIndex + 1)]))
-        //    {
-        //        if (!TryEncodeLetterOrNumber(ConsumeCurrent(s, ref currentIndex), ref data)) return false;
-        //    }
-
-        //    data *= 10;
-        //    if (!TryEncodeNumber(ConsumeCurrent(s, ref currentIndex), ref data)) return false;
-
-        //    data *= 26;
-        //    if (!TryEncodeLetter(ConsumeCurrent(s, ref currentIndex), ref data)) return false;
-
-        //    data *= 26;
-        //    if (!TryEncodeLetter(ConsumeCurrent(s, ref currentIndex), ref data)) return false;
-
-        //    postcode = new Postcode(data);
-        //    return true;
-        //}
-
-        private static char Next(string s, ref int i)
+        private static char Consume(string s, ref int i)
         {
             while (i < s.Length)
             {
@@ -119,44 +41,52 @@ namespace Rbec.Postcodes
 
         public static bool TryParse(string s, out Postcode postcode)
         {
+            var isInvalid = false;
+            postcode = default(Postcode);
+            if (s == null)
+                return false;
+
             var i = 0;
-            var c = Next(s, ref i);
-            var data = EncodeLetter(c);
-            c = Next(s, ref i);
+            var current = Consume(s, ref i);
+            var data = EncodeLetter(current, ref isInvalid);
+            current = Consume(s, ref i);
 
             data *= 27;
-            if (IsLetter(c))
+            if (IsLetter(current))
             {
-                data += EncodeLetter(c) + 1;
-                c = Next(s, ref i);
+                data += EncodeLetter(current, ref isInvalid) + 1;
+                current = Consume(s, ref i);
             }
 
             data *= 10;
-            data += EncodeNumber(c);
+            data += EncodeNumber(current, ref isInvalid);
 
-            c = Next(s, ref i);
-            var d = Next(s, ref i);
+            current = Consume(s, ref i);
+            var next = Consume(s, ref i);
 
             data *= 37;
-            if (IsNumber(d))
+            if (IsNumber(next))
             {
-                if (IsNumber(c))
-                    data += EncodeNumber(c) + 1;
+                if (IsNumber(current))
+                    data += EncodeNumber(current, ref isInvalid) + 1;
                 else
-                    data += EncodeLetter(c) + 11;
-                c = d;
-                d = Next(s, ref i);
+                    data += EncodeLetter(current, ref isInvalid) + 11;
+                current = next;
+                next = Consume(s, ref i);
             }
 
             data *= 10;
-            data += EncodeNumber(c);
+            data += EncodeNumber(current, ref isInvalid);
 
             data *= 26;
-            data += EncodeLetter(d);
+            data += EncodeLetter(next, ref isInvalid);
 
             data *= 26;
-            c = Next(s, ref i);
-            data += EncodeLetter(c);
+            current = Consume(s, ref i);
+            data += EncodeLetter(current, ref isInvalid);
+
+            if (isInvalid || Consume(s, ref i) != default(char))
+                return false;
 
             postcode = new Postcode(data);
             return true;
@@ -180,7 +110,7 @@ namespace Rbec.Postcodes
         private static char DecodeLetter(ref int c)
         {
             c = DivRem(c, 26, out var remainder);
-            return (char)(remainder + 'A');
+            return (char) (remainder + 'A');
         }
 
         private static char DecodeLetterOrSpace(ref int c)
@@ -189,7 +119,7 @@ namespace Rbec.Postcodes
 
             if (remainder == 0)
                 return ' ';
-            return (char)(remainder + 'A' - 1);
+            return (char) (remainder + 'A' - 1);
         }
 
         private static char DecodeNumberOrLetterOrSpace(ref int c)
@@ -199,14 +129,14 @@ namespace Rbec.Postcodes
             if (remainder == 0)
                 return ' ';
             if (remainder <= 10)
-                return (char)(remainder + '0' - 1);
-            return (char)(remainder + 'A' - 11);
+                return (char) (remainder + '0' - 1);
+            return (char) (remainder + 'A' - 11);
         }
 
         private static char DecodeNumber(ref int c)
         {
             c = DivRem(c, 10, out var remainder);
-            return (char)(remainder + '0');
+            return (char) (remainder + '0');
         }
 
         public override string ToString()

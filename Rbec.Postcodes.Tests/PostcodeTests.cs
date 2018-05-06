@@ -1,4 +1,6 @@
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using Xunit;
 
 namespace Rbec.Postcodes.Tests
@@ -13,45 +15,63 @@ namespace Rbec.Postcodes.Tests
         [InlineData("BN6")]
         [InlineData("BN6 8")]
         [InlineData("BN6 8B")]
-        public void TestBadInput(string s)
+        [InlineData("BN66 8B")]
+        [InlineData("B66 8B")]
+        [InlineData("B6 8B")]
+        [InlineData("B6 8BAB")]
+        public void TestInvalid(string s)
         {
             Assert.False(Postcode.TryParse(s, out var postcode));
             Assert.Equal(default(Postcode), postcode);
         }
 
         [Fact]
-        public void TestNoSpace1()
+        public void DenormalisedParsesCorrectly()
         {
-            var postcode = Postcode.Parse("BN68BA");
-            Assert.Equal("BN6 8BA", postcode.ToString());
+            foreach (var (expected, s) in ValidTestCases())
+            {
+                var postcode = Postcode.Parse(s);
+                Assert.Equal(expected, postcode.ToString());
+            }
         }
 
-        [Fact]
-        public void TestNoSpace2()
+        public static IEnumerable<(string expected, string s)> ValidTestCases()
         {
-            var postcode = Postcode.Parse("AB101AA");
-            Assert.Equal("AB10 1AA", postcode.ToString());
+            var normalised = new[]
+                             {
+                                 "M1 1AA",
+                                 "M60 1NW",
+                                 "CR2 6XH",
+                                 "DN55 1PT",
+                                 "W1A 1HQ",
+                                 "EC1A 1BB"
+                             };
+            return normalised.SelectMany(n => DenormaliseSpaces(n.Replace(" ", "")).SelectMany(DenormaliseCase).Select(denormalised => (n, denormalised)));
         }
 
-        [Fact]
-        public void TestSingleSpace1()
+        private static IEnumerable<string> DenormaliseCase(string s)
         {
-            var postcode = Postcode.Parse("BN6 8BA");
-            Assert.Equal("BN6 8BA", postcode.ToString());
+            yield return s;
+            for (var i = 0; i < s.Length; i++)
+                if (char.IsLetter(s, i))
+                {
+                    yield return $"{s.Substring(0, i)}{char.ToLower(s[i])}{s.Substring(i + 1)}";
+
+                    for (var j = i + 1; j < s.Length; j++)
+                        if (char.IsLetter(s, j))
+                            yield return $"{s.Substring(0, i)}{char.ToLower(s[i])}{s.Substring(i + 1, j - i - 1)}{char.ToLower(s[j])}{s.Substring(j + 1)}";
+                }
         }
 
-        [Fact]
-        public void TestSingleSpace2()
+        private static IEnumerable<string> DenormaliseSpaces(string s)
         {
-            var postcode = Postcode.Parse("AB10 1AA");
-            Assert.Equal("AB10 1AA", postcode.ToString());
-        }
+            for (var i = 0; i <= s.Length; i++)
+            {
+                yield return $"{s.Substring(0, i)} {s.Substring(i)}";
 
-        [Fact]
-        public void TestSimple2()
-        {
-            var postcode = Postcode.Parse("BN6  8BA");
-            Assert.Equal(Postcode.Parse("BN6 8BA"), postcode);
+                for (var j = i; j <= s.Length; j++)
+                    yield return $"{s.Substring(0, i)} {s.Substring(i, j - i)} {s.Substring(j)}";
+            }
         }
 
         [Fact]
@@ -59,16 +79,9 @@ namespace Rbec.Postcodes.Tests
         {
             foreach (var line in File.ReadLines(@"C:\temp\postcodes.txt"))
             {
-               // var postcode = Postcode.Parse(line.Replace(" ", ""));
                 var postcode = Postcode.Parse(line);
                 Assert.Equal(line, postcode.ToString());
             }
         }
-
-        //[Fact]
-        //public void SavePostcodes()
-        //{
-        //    File.WriteAllLines(@"C:\temp\postcodes.csv", File.ReadLines(@"C:\temp\full\pen.csv").Skip(1).Select(line => line.Substring(0, line.IndexOf(','))), Encoding.ASCII);
-        //}
     }
 }
