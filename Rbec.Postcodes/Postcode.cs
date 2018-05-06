@@ -22,26 +22,9 @@ namespace Rbec.Postcodes
             return c >= 'A';
         }
 
-
         public static bool IsNumberFast(char c)
         {
             return c < 'A';
-        }
-
-        public static char[] Normalise(string s)
-        {
-            var chars = new char[7];
-            var i = 0;
-            chars[0] = ToUpperFast(s[i++]);
-            chars[1] = IsNumberFast(s[i]) ? ' ' : ToUpperFast(s[i++]);
-            chars[2] = s[i++];
-            chars[3] = IsLetterFast(s[i + 1]) ? ' ' : ToUpperFast(s[i++]);
-            while (s[i] == ' ')
-                i++;
-            chars[4] = s[i++];
-            chars[5] = ToUpperFast(s[i++]);
-            chars[6] = ToUpperFast(s[i]);
-            return chars;
         }
 
         private static uint EncodeLetter(char c) =>
@@ -50,24 +33,47 @@ namespace Rbec.Postcodes
         private static uint EncodeNumber(char c) =>
             (uint)c - '0';
 
-        private static uint EncodeLetterOrSpace(char c) =>
-            c == ' '
-                ? 0
-                : EncodeLetter(c) + 1;
-
-        private static uint EncodeNumberOrLetterOrSpace(char c)
+        private static uint EncodeNumberOrLetter(char c)
         {
-            if (c == ' ')
-                return 0;
             if (IsNumberFast(c))
-                return EncodeNumber(c) + 1;
-            return EncodeLetter(c) + 11;
+                return EncodeNumber(c);
+            return EncodeLetter(c) + 10;
+        }
+
+        private static char Next(string s, ref int next)
+        {
+            var c = s[next];
+            while (s[++next] == ' ') { }
+            return c;
+        }
+
+        public static Postcode Parse(string s)
+        {
+            var i = 0;
+            var data = EncodeLetter(ToUpperFast(Next(s, ref i)));
+            data *= 27;
+            if (!IsNumberFast(s[i]))
+                data += EncodeLetter(ToUpperFast(Next(s, ref i))) + 1;
+            data = data * 10 + EncodeNumber(Next(s, ref i));
+
+            var j = i;
+            Next(s, ref j);
+            data *= 37;
+            if (!IsLetterFast(s[j]))
+            {
+                data += EncodeNumberOrLetter(ToUpperFast(Next(s, ref i))) + 1;
+            }
+
+            data = data * 10 + EncodeNumber(Next(s, ref i));
+            data = data * 26 + EncodeLetter(ToUpperFast(Next(s, ref i)));
+            return new Postcode(data * 26 + EncodeLetter(ToUpperFast(s[i])));
         }
 
         private static uint DivRem(uint a, uint b, out uint remainder)
         {
             var result = a / b;
-            remainder = a - result * b;
+            remainder = a % b;
+            //remainder = a - result * b;
             return result;
         }
 
@@ -103,18 +109,6 @@ namespace Rbec.Postcodes
             return (char)(remainder + '0');
         }
 
-        public static Postcode Parse(string s)
-        {
-            var chars = Normalise(s);
-            var data = EncodeLetter(chars[0]);
-            data = data * 27 + EncodeLetterOrSpace(chars[1]);
-            data = data * 10 + EncodeNumber(chars[2]);
-            data = data * 37 + EncodeNumberOrLetterOrSpace(chars[3]);
-            data = data * 10 + EncodeNumber(chars[4]);
-            data = data * 26 + EncodeLetter(chars[5]);
-            return new Postcode(data * 26 + EncodeLetter(chars[6]));
-        }
-
         public override string ToString()
         {
             var chars = new char[8];
@@ -147,7 +141,7 @@ namespace Rbec.Postcodes
 
         public override bool Equals(object obj)
         {
-            if (ReferenceEquals(null, obj)) return false;
+            if (obj is null) return false;
             return obj is Postcode postcode && Equals(postcode);
         }
 
