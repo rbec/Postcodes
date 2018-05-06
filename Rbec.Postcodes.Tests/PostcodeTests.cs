@@ -5,6 +5,20 @@ namespace Rbec.Postcodes.Tests
 {
     public class PostcodeTests
     {
+        [Theory]
+        [InlineData(null)]
+        [InlineData("")]
+        [InlineData("B")]
+        [InlineData("BN")]
+        [InlineData("BN6")]
+        [InlineData("BN6 8")]
+        [InlineData("BN6 8B")]
+        public void TestBadInput(string s)
+        {
+            Assert.False(Postcode.TryParse(s, out var postcode));
+            Assert.Equal(default(Postcode), postcode);
+        }
+
         [Fact]
         public void TestNoSpace1()
         {
