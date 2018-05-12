@@ -8,14 +8,14 @@
 ## Background
 Every UK address is associated with a [postcode](https://en.wikipedia.org/wiki/Postcodes_in_the_United_Kingdom). This consists of between 5 and 7 letters and digits in one of these formats:
 
-| Area | District | Sector | Unit |
-|------|----------|--------|------|
-| A    | 1        | 1      |  AA  |
-| A    | 11       | 1      |  AA  |
-| A    | 1A       | 1      |  AA  |
-| AA   | 1        | 1      |  AA  |
-| AA   | 11       | 1      |  AA  |
-| AA   | 1A       | 1      |  AA  |
+| Area | District | Sector | Unit | Example  |
+|------|----------|--------|------|----------|
+| A    | 1        | 1      |  AA  | M1 1AE   |
+| A    | 11       | 1      |  AA  | B33 8TH  |
+| A    | 1A       | 1      |  AA  | W1A 0AX  |
+| AA   | 1        | 1      |  AA  | CR2 6XH  |
+| AA   | 11       | 1      |  AA  | DN55 1PT |
+| AA   | 1A       | 1      |  AA  | EC1A 1BB |
 
 Where `A` represents an upper case letter A-Z and `1` represents a digit 0-9. A single space is placed between the sector and unit for a total of between 6 and 8 characters.
 
