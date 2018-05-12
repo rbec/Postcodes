@@ -37,7 +37,7 @@ Therefore it is possible to represent a postcode in a 4 byte (32 bit) word by us
 | Digit                    | 0 | 1 | 2 | 3 | … | 9 |
 | Letter                   | A | B | C | D | … | J | K  | L  | M  | N  | …  | Z  |
 | Letter or missing        |   | A | B | C | … | K | L  | M  | N  | O  | …  | Y  |  Z |
-| Letter, digit or missing |   | 0 | 1 | 2 | … | 8 | 9  | A  | B  | C  | …  | Z  |    |   |  Z |
+| Letter, digit or missing |   | 0 | 1 | 2 | … | 8 | 9  | A  | B  | C  | …  | M  |  N | … |  Z |
 #### Parsing
 A 
 ``` C#
