@@ -28,10 +28,10 @@ Where `A` represents an upper case letter A-Z and `1` represents a digit 0-9. A 
 * 1st character of the **Unit** is a letter (26 possibilities)
 * 2nd character of the **Unit** is a letter (26 possibilities)
 
-Hence the number of possible postcodes is
-26 · 27 · 10 · 37 · 10 · 26 · 26 = 1,755,842,400 ≤ 2³²
+The number of possible postcodes is
+26 · 27 · 10 · 37 · 10 · 26 · 26 = 1,755,842,400 ≤ 2³².
 
-Therefore it is possible to represent a postcode in a 4 byte (32 bit) word by using this scheme
+Therefore it is possible to represent a postcode in a 4 byte (32 bit) word by using this scheme.
 
 | Value                    | 0 | 1 | 2 | 3 | … | 9 | 10 | 11 | 12 | 13 | …  | 25 | 26 | … | 36 | 
 |--------------------------|---|---|---|---|---|---|--- |----|----|----|----|----|----|---|----|
