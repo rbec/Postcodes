@@ -1,6 +1,9 @@
 # UK Postcode Data Structure
 
-## Description
+## Overview
+* [Type safe](https://en.wikipedia.org/wiki/Type_safety) representation of only those strings that are valid postcodes
+* Stack allocated 4 byte struct instead of 26 - 30 bytes for a heap allocated string + 4 bytes for a reference to it
+* Fast validation and parsing of a string without any heap allocations
 
 Every UK address is associated with a [postcode](https://en.wikipedia.org/wiki/Postcodes_in_the_United_Kingdom). This consists of between 5 and 7 letters and digits in one of these formats:
 
@@ -13,13 +16,9 @@ Every UK address is associated with a [postcode](https://en.wikipedia.org/wiki/P
 | AA   | 11     | 1AA  |
 | AA   | 1A     | 1AA  |
 
-Where `A` represents an upper case letter A-Z and `1` represents a digit 0-9. A single space is placed between the sector and unit. This type represents a postcode according to this definition.
+Where `A` represents an upper case letter A-Z and `1` represents a digit 0-9. A single space is placed between the sector and unit for a total of between 6 and 8 characters.
 
-### Benefits
-* [Type safe](https://en.wikipedia.org/wiki/Type_safety) representation of only those strings that are valid postcodes
-* Stack allocated 4 byte struct instead of 26 - 30 bytes for a heap allocated string + 4 bytes for a pointer to it
-* 
-### Observations
+### Description
 * 1st character of the Area is a letter (26 possibilities)
 * 2nd character of the Area is a letter or missing (26 + 1 = 27 possibilities)
 * 1st character of the Sector is a digit (10 possibilities)
@@ -31,4 +30,16 @@ Where `A` represents an upper case letter A-Z and `1` represents a digit 0-9. A 
 Hence the number of possible postcodes is
 26 · 27 · 10 · 37 · 10 · 26 · 26 = 1,755,842,400 ≤ 2³²
 
-## Motivation
+Therefore it is possible to represent a postcode in a 4 byte (32 bit) word by using this scheme
+
+| Value                    | 0 | 1 | 2 | 3 | … | 9 | 10 | 11 | 12 | 13 | …  | 25 | 26 | … | 36 | 
+|--------------------------|---|---|---|---|---|---|--- |----|----|----|----|----|----|---|----|
+| Digit                    | 0 | 1 | 2 | 3 | … | 9 |
+| Letter                   | A | B | C | D | … | J | K  | L  | M  | N  | …  | Z  |
+| Letter or missing        |   | A | B | C | … | K | L  | M  | N  | O  | …  | Y  |  Z |
+| Letter, digit or missing |   | 0 | 1 | 2 | … | 8 | 9  | A  | B  | C  | …  | Z  |    |   |  Z |
+#### Parsing
+A 
+``` C#
+public static bool TryParse(string s, out Postcode postcode)
+```
