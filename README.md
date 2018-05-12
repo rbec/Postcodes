@@ -3,7 +3,7 @@
 ## Overview
 * [Type safe](https://en.wikipedia.org/wiki/Type_safety) representation of only those strings that are valid postcodes
 * Stack allocated 4 byte struct instead of 26 - 30 bytes for a heap allocated string + 4 bytes for a reference to it
-* Fast validation and parsing of a string without any heap allocations
+* Fast postcode validation and parsing, removing spaces anywhere in the input string and treating all letters case in-sensitively
 
 Every UK address is associated with a [postcode](https://en.wikipedia.org/wiki/Postcodes_in_the_United_Kingdom). This consists of between 5 and 7 letters and digits in one of these formats:
 
@@ -38,8 +38,9 @@ Therefore it is possible to represent a postcode in a 4 byte (32 bit) word by us
 | Letter                   | A | B | C | D | … | J | K  | L  | M  | N  | …  | Z  |
 | Letter or missing        |   | A | B | C | … | K | L  | M  | N  | O  | …  | Y  |  Z |
 | Letter, digit or missing |   | 0 | 1 | 2 | … | 8 | 9  | A  | B  | C  | …  | M  |  N | … |  Z |
-#### Parsing
-A 
+
+#### Parsing Algorithm
 ``` C#
 public static bool TryParse(string s, out Postcode postcode)
 ```
+Imagine each valid postcode is placed in a [7 dimensional array](https://en.wikipedia.org/wiki/Array_data_structure#Multidimensional_arrays) with the indexes for each dimension given by the above scheme above. This array might be represented in memory by a single dimensional array. By calculating the index for a given postcode in this single dimensional array we have an integer that uniquely specifies any valid postcode. It is not necessary to store the hypothetical array since the element the index represents can be easily computed using the reverse calculation.
