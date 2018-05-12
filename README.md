@@ -19,7 +19,7 @@ Every UK address is associated with a [postcode](https://en.wikipedia.org/wiki/P
 
 Where `A` represents an upper case letter A-Z and `1` represents a digit 0-9. A single space is placed between the sector and unit for a total of between 6 and 8 characters.
 
-### Description
+### Description of representation
 * 1st character of the **Area** is a letter (26 possibilities)
 * 2nd character of the **Area** is a letter or missing (26 + 1 = 27 possibilities)
 * 1st character of the **District** is a digit (10 possibilities)
@@ -40,7 +40,7 @@ Therefore it is possible to represent a postcode in a 4 byte (32 bit) word by us
 | Letter or missing        |   | A | B | C | … | K | L  | M  | N  | O  | …  | Y  |  Z |
 | Letter, digit or missing |   | 0 | 1 | 2 | … | 8 | 9  | A  | B  | C  | …  | M  |  N | … |  Z |
 
-#### Parsing Algorithm
+### Parsing Algorithm
 ``` C#
 public static bool TryParse(string s, out Postcode postcode)
 ```
