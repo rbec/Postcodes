@@ -2,9 +2,10 @@
 
 ## Overview
 * [Type safe](https://en.wikipedia.org/wiki/Type_safety) representation of only those strings that are valid postcodes
-* Stack allocated 4 byte struct instead of 26 - 30 bytes for a heap allocated string + 4 bytes for a reference to it
-* Fast postcode validation and parsing, removing spaces anywhere in the input string and treating all letters case in-sensitively
+* Stack allocated 4 byte struct instead of a .NET string ([26 - 30 byte heap allocation + 4 bytes for a reference](http://www.abstractpath.com/2012/size-of-a-csharp-string/))
+* Fast postcode validation and parsing, ignoring spaces and treating all letters case in-sensitively
 
+## Background
 Every UK address is associated with a [postcode](https://en.wikipedia.org/wiki/Postcodes_in_the_United_Kingdom). This consists of between 5 and 7 letters and digits in one of these formats:
 
 | Area | Sector | Unit |
@@ -19,7 +20,7 @@ Every UK address is associated with a [postcode](https://en.wikipedia.org/wiki/P
 Where `A` represents an upper case letter A-Z and `1` represents a digit 0-9. A single space is placed between the sector and unit for a total of between 6 and 8 characters.
 
 ### Description
-* 1st character of the Area is a letter (26 possibilities)
+* 1st character of the *Area* is a letter (26 possibilities)
 * 2nd character of the Area is a letter or missing (26 + 1 = 27 possibilities)
 * 1st character of the Sector is a digit (10 possibilities)
 * 2nd character of the Sector is a letter, a digit or missing (26 + 10 + 1 = 37 possibilities)
