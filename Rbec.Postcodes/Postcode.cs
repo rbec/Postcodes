@@ -2,7 +2,7 @@
 
 namespace Rbec.Postcodes
 {
-    public struct Postcode : IComparable<Postcode>, IEquatable<Postcode>
+    public struct Postcode : IEquatable<Postcode>
     {
         private readonly int _data;
 
@@ -11,10 +11,18 @@ namespace Rbec.Postcodes
             _data = data;
         }
 
+        #region Parsing
+
         public static bool IsLetter(char c) => c >= 'A';
         public static bool IsNumber(char c) => c < 'A';
 
-        private static int EncodeLetter(char c, ref bool isInvalid)
+        /// <summary>
+        /// Checks that a character is letter and converts it to an integer 0..25 ignoring case.
+        /// </summary>
+        /// <param name="c">The character to parse.</param>
+        /// <param name="isInvalid">If the character is a letter the value passed in is unchanged, otherwise it is set to true.</param>
+        /// <returns>0..25 if a letter, otherwise undefined.</returns>
+        private static int ParseLetter(char c, ref bool isInvalid)
         {
             if (c >= 'a')
                 c = (char) (c - 32);
@@ -22,13 +30,28 @@ namespace Rbec.Postcodes
             return c - 'A';
         }
 
-        private static int EncodeNumber(char c, ref bool isInvalid)
+        /// <summary>
+        /// Checks that a character is digit and converts it to an integer 0..9.
+        /// </summary>
+        /// <param name="c">The character to parse</param>
+        /// <param name="isInvalid">If the character is a digit the value passed in is unchanged, otherwise it is set to true.</param>
+        /// <returns>0..9 if a digit, otherwise undefine.d</returns>
+        private static int ParseDigit(char c, ref bool isInvalid)
         {
             isInvalid |= c < '0' || c > '9';
             return c - '0';
         }
 
-        private static char Consume(string s, ref int i)
+        /// <summary>
+        /// Enumerate the characters of a string, skipping spaces and maintaining the current index.
+        /// </summary>
+        /// <param name="s">The string to enumerate</param>
+        /// <param name="i">
+        /// Receives the index from which to start looking for the next non-space character.
+        /// Returns the index after the first non-space character.
+        /// </param>
+        /// <returns>The next non-space character, or if the end of the string is reached the ASCII NULL character.</returns>
+        private static char NextNonSpaceCharacter(string s, ref int i)
         {
             while (i < s.Length)
             {
@@ -39,6 +62,12 @@ namespace Rbec.Postcodes
             return default(char);
         }
 
+        /// <summary>
+        /// Validates and parses a string into a postcode.
+        /// </summary>
+        /// <param name="s">The string to validate and parse.</param>
+        /// <param name="postcode"></param>
+        /// <returns>Whether the string was a valid postcode.</returns>
         public static bool TryParse(string s, out Postcode postcode)
         {
             var isInvalid = false;
@@ -47,45 +76,46 @@ namespace Rbec.Postcodes
                 return false;
 
             var i = 0;
-            var current = Consume(s, ref i);
-            var data = EncodeLetter(current, ref isInvalid);
-            current = Consume(s, ref i);
+            var current = NextNonSpaceCharacter(s, ref i);
+            var data = ParseLetter(current, ref isInvalid);
 
+
+            current = NextNonSpaceCharacter(s, ref i);
             data *= 27;
             if (IsLetter(current))
             {
-                data += EncodeLetter(current, ref isInvalid) + 1;
-                current = Consume(s, ref i);
+                data += ParseLetter(current, ref isInvalid) + 1;
+                current = NextNonSpaceCharacter(s, ref i);
             }
 
             data *= 10;
-            data += EncodeNumber(current, ref isInvalid);
+            data += ParseDigit(current, ref isInvalid);
 
-            current = Consume(s, ref i);
-            var next = Consume(s, ref i);
+            current = NextNonSpaceCharacter(s, ref i);
+            var next = NextNonSpaceCharacter(s, ref i);
 
             data *= 37;
             if (IsNumber(next))
             {
                 if (IsNumber(current))
-                    data += EncodeNumber(current, ref isInvalid) + 1;
+                    data += ParseDigit(current, ref isInvalid) + 1;
                 else
-                    data += EncodeLetter(current, ref isInvalid) + 11;
+                    data += ParseLetter(current, ref isInvalid) + 11;
                 current = next;
-                next = Consume(s, ref i);
+                next = NextNonSpaceCharacter(s, ref i);
             }
 
             data *= 10;
-            data += EncodeNumber(current, ref isInvalid);
+            data += ParseDigit(current, ref isInvalid);
 
             data *= 26;
-            data += EncodeLetter(next, ref isInvalid);
+            data += ParseLetter(next, ref isInvalid);
 
             data *= 26;
-            current = Consume(s, ref i);
-            data += EncodeLetter(current, ref isInvalid);
+            current = NextNonSpaceCharacter(s, ref i);
+            data += ParseLetter(current, ref isInvalid);
 
-            if (isInvalid || Consume(s, ref i) != default(char))
+            if (isInvalid || NextNonSpaceCharacter(s, ref i) != default(char))
                 return false;
 
             postcode = new Postcode(data);
@@ -99,6 +129,10 @@ namespace Rbec.Postcodes
 
             throw new FormatException($"'{s}' is not a valid postcode");
         }
+
+        #endregion
+
+        #region Formatting
 
         private static int DivRem(int a, int b, out int remainder)
         {
@@ -159,9 +193,20 @@ namespace Rbec.Postcodes
             return new string(chars, i, 8 - i);
         }
 
-        public int CompareTo(Postcode other) => _data.CompareTo(other._data);
-        public bool Equals(Postcode other) => _data == other._data;
-        public override bool Equals(object obj) => !(obj is null) && obj is Postcode postcode && Equals(postcode);
+        #endregion
+
+        #region IEquatable<Postcode> implementation
+
+        public bool Equals(Postcode other) =>
+            _data == other._data;
+
+        public override bool Equals(object obj) =>
+            !(obj is null)
+            && obj is Postcode postcode
+            && Equals(postcode);
+
         public override int GetHashCode() => _data;
+
+        #endregion
     }
 }
