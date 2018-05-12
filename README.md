@@ -22,11 +22,11 @@ Where `A` represents an upper case letter A-Z and `1` represents a digit 0-9. A 
 ### Description
 * 1st character of the **Area** is a letter (26 possibilities)
 * 2nd character of the **Area** is a letter or missing (26 + 1 = 27 possibilities)
+* 1st character of the **District** is a digit (10 possibilities)
+* 2nd character of the **District** is a letter, a digit or missing (26 + 10 + 1 = 37 possibilities)
 * 1st character of the **Sector** is a digit (10 possibilities)
-* 2nd character of the **Sector** is a letter, a digit or missing (26 + 10 + 1 = 37 possibilities)
-* 1st character of the **Unit** is a digit (10 possibilities)
+* 1st character of the **Unit** is a letter (26 possibilities)
 * 2nd character of the **Unit** is a letter (26 possibilities)
-* 3rd character of the **Unit** is a letter (26 possibilities)
 
 Hence the number of possible postcodes is
 26 · 27 · 10 · 37 · 10 · 26 · 26 = 1,755,842,400 ≤ 2³²
