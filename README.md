@@ -44,4 +44,7 @@ Therefore it is possible to represent a postcode in a 4 byte (32 bit) word by us
 ``` C#
 public static bool TryParse(string s, out Postcode postcode)
 ```
-Imagine each valid postcode is placed in a [7 dimensional array](https://en.wikipedia.org/wiki/Array_data_structure#Multidimensional_arrays) with the indexes for each dimension given by the above scheme above. This array might be represented in memory by a single dimensional array. By calculating the index for a given postcode in this single dimensional array we have an integer that uniquely specifies any valid postcode. It is not necessary to store the hypothetical array since the element the index represents can be easily computed using the reverse calculation.
+* Imagine each valid postcode is placed in a [7 dimensional array](https://en.wikipedia.org/wiki/Array_data_structure#Multidimensional_arrays) with the indexes for each dimension given by the scheme above.
+* This array might be represented in memory by a single dimensional array.
+* By calculating the index for a given postcode in this single dimensional array we have an integer that uniquely specifies any valid postcode.
+* It is not necessary to store the hypothetical array since the element the index represents can be easily computed using the reverse calculation.
