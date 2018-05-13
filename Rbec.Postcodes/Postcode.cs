@@ -13,8 +13,8 @@ namespace Rbec.Postcodes
 
         #region Parsing
 
-        public static bool IsLetter(char c) => c >= 'A';
-        public static bool IsNumber(char c) => c < 'A';
+        private static bool IsLetter(char c) => c >= 'A';
+        private static bool IsDigit(char c) => c < 'A';
 
         /// <summary>
         /// Checks that a character is letter and converts it to an integer 0..25 ignoring case.
@@ -70,52 +70,84 @@ namespace Rbec.Postcodes
         /// <returns>Whether the string was a valid postcode.</returns>
         public static bool TryParse(string s, out Postcode postcode)
         {
-            var isInvalid = false;
+            // single forward pass avoiding allocations
+
+            var isInvalid = false; // is updated as each character is parsed to reflect if this is a valid postcode
+
             postcode = default(Postcode);
             if (s == null)
                 return false;
 
-            var i = 0;
-            var current = NextNonSpaceCharacter(s, ref i);
+            var currentIndex = 0; // index of the character to be parsed
+
+            #region 1st character of Postcode Area
+
+            var current = NextNonSpaceCharacter(s, ref currentIndex);
             var data = ParseLetter(current, ref isInvalid);
 
+            #endregion
 
-            current = NextNonSpaceCharacter(s, ref i);
+            current = NextNonSpaceCharacter(s, ref currentIndex);
             data *= 27;
-            if (IsLetter(current))
+            if (IsLetter(current)) // if NOT a letter the encoding scheme uses 0 (data += 0 can be omitted)
             {
+                #region (Optional) 2nd character of Postcode Area
+
                 data += ParseLetter(current, ref isInvalid) + 1;
-                current = NextNonSpaceCharacter(s, ref i);
+                current = NextNonSpaceCharacter(s, ref currentIndex);
+
+                #endregion
             }
+
+            #region 1st character of Postcode District
 
             data *= 10;
             data += ParseDigit(current, ref isInvalid);
 
-            current = NextNonSpaceCharacter(s, ref i);
-            var next = NextNonSpaceCharacter(s, ref i);
+            #endregion
+
+            current = NextNonSpaceCharacter(s, ref currentIndex);
+            var next = NextNonSpaceCharacter(s, ref currentIndex);
 
             data *= 37;
-            if (IsNumber(next))
+            if (IsDigit(next)) // look ahead 1 character to see if the current character is part of the District or Sector
             {
-                if (IsNumber(current))
+                #region (Optional) 2nd character of Postcode District
+
+                if (IsDigit(current)) // if NOT a letter or digit the encoding scheme uses 0 (data += 0 can be omitted)
                     data += ParseDigit(current, ref isInvalid) + 1;
                 else
                     data += ParseLetter(current, ref isInvalid) + 11;
+
+                #endregion
+
                 current = next;
-                next = NextNonSpaceCharacter(s, ref i);
+                next = NextNonSpaceCharacter(s, ref currentIndex);
             }
+
+            #region Postcode Sector
 
             data *= 10;
             data += ParseDigit(current, ref isInvalid);
+
+            #endregion
+
+            #region 1st character of Postcode Unit
 
             data *= 26;
             data += ParseLetter(next, ref isInvalid);
 
+            #endregion
+
+            #region 2nd character of Postcode Unit
+
             data *= 26;
-            current = NextNonSpaceCharacter(s, ref i);
+            current = NextNonSpaceCharacter(s, ref currentIndex);
             data += ParseLetter(current, ref isInvalid);
 
-            if (isInvalid || NextNonSpaceCharacter(s, ref i) != default(char))
+            #endregion
+
+            if (isInvalid || NextNonSpaceCharacter(s, ref currentIndex) != default(char)) // make sure there are no superfluous charaters at the end
                 return false;
 
             postcode = new Postcode(data);
@@ -156,7 +188,7 @@ namespace Rbec.Postcodes
             return (char) (remainder + 'A' - 1);
         }
 
-        private static char DecodeNumberOrLetterOrSpace(ref int c)
+        private static char DecodeDigitOrLetterOrSpace(ref int c)
         {
             c = DivRem(c, 37, out var remainder);
 
@@ -167,25 +199,28 @@ namespace Rbec.Postcodes
             return (char) (remainder + 'A' - 11);
         }
 
-        private static char DecodeNumber(ref int c)
+        private static char DecodeDigit(ref int c)
         {
             c = DivRem(c, 10, out var remainder);
             return (char) (remainder + '0');
         }
 
+        /// <summary>
+        /// Postcode as a normalised string (all uppercase with single space between District and Sector)
+        /// </summary>
         public override string ToString()
         {
             var chars = new char[8];
             var data = _data;
             chars[7] = DecodeLetter(ref data);
             chars[6] = DecodeLetter(ref data);
-            chars[5] = DecodeNumber(ref data);
+            chars[5] = DecodeDigit(ref data);
             chars[4] = ' ';
-            chars[3] = DecodeNumberOrLetterOrSpace(ref data);
+            chars[3] = DecodeDigitOrLetterOrSpace(ref data);
 
             var i = chars[3] == ' ' ? 3 : 2;
 
-            chars[i--] = DecodeNumber(ref data);
+            chars[i--] = DecodeDigit(ref data);
             chars[i] = DecodeLetterOrSpace(ref data);
             if (chars[i] != ' ')
                 i--;
