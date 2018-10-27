@@ -47,3 +47,5 @@ The algorithm can be understood as a special case of [multi-dimensional](https:/
 * This array might be represented in memory by a single dimensional array
 * By calculating the index for a given postcode in this single dimensional array we have an integer that uniquely specifies any valid postcode
 * It is not necessary to store the hypothetical array since the element the index represents can be easily computed using the reverse calculation
+
+Package available on [Nuget](https://www.nuget.org/packages/Rbec.Postcodes)
